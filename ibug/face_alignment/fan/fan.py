@@ -73,7 +73,7 @@ class HourGlass(nn.Module):
         up1 = inp
         up1 = self._modules['b1_' + str(level)](up1)
 
-        if self.config.hg_use_avg_pool:
+        if self.config.use_avg_pool:
             low1 = F.avg_pool2d(inp, 2, stride=2)
         else:
             low1 = F.max_pool2d(inp, 2, stride=2)
@@ -129,11 +129,15 @@ class FAN(nn.Module):
 
     def forward(self, x):
         x = F.relu(self.bn1(self.conv1(x)), True)
-        x = F.max_pool2d(self.conv2(x), 2, stride=2)
+        if self.config.use_avg_pool:
+            x = F.avg_pool2d(self.conv2(x), 2, stride=2)
+        else:
+            x = F.max_pool2d(self.conv2(x), 2, stride=2)
         x = self.conv3(x)
         x = self.conv4(x)
 
         previous = x
+        hg_feats = []
         tmp_out = None
         for i in range(self.config.num_modules):
             hg = self._modules['m' + str(i)](previous)
@@ -151,4 +155,6 @@ class FAN(nn.Module):
                 tmp_out_ = self._modules['al' + str(i)](tmp_out)
                 previous = previous + ll + tmp_out_
 
-        return tmp_out
+            hg_feats.append(ll)
+
+        return tmp_out, x, tuple(hg_feats)

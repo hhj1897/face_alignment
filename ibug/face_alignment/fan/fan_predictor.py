@@ -17,6 +17,9 @@ class FANPredictor(object):
         self.net = FAN(config=self.config).to(self.device)
         self.net.load_state_dict(torch.load(model.weights, map_location=self.device))
         self.net.eval()
+        if self.config.use_jit:
+            self.net = torch.jit.trace(self.net, torch.rand(1, 3, self.config.input_size,
+                                                            self.config.input_size).to(self.device))
 
     @staticmethod
     def get_model(name='2dfan4'):
@@ -24,17 +27,17 @@ class FANPredictor(object):
         if name == '2dfan4':
             return SimpleNamespace(weights=os.path.join(os.path.dirname(__file__), 'weights', '2dfan4.pth'),
                                    config=SimpleNamespace(crop_ratio=0.55, input_size=256, num_modules=4,
-                                                          hg_num_features=256, hg_depth=4, hg_use_avg_pool=True))
+                                                          hg_num_features=256, hg_depth=4, use_avg_pool=True))
         elif name == '2dfan2':
             return SimpleNamespace(weights=os.path.join(os.path.dirname(__file__), 'weights', '2dfan2.pth'),
                                    config=SimpleNamespace(crop_ratio=0.55, input_size=256, num_modules=2,
-                                                          hg_num_features=256, hg_depth=4, hg_use_avg_pool=False))
+                                                          hg_num_features=256, hg_depth=4, use_avg_pool=False))
         else:
             raise ValueError('name must be set to fan4')
 
     @staticmethod
-    def create_config(gamma=1.0, radius=0.1, return_features=False):
-        return SimpleNamespace(gamma=gamma, radius=radius, return_features=return_features)
+    def create_config(gamma=1.0, radius=0.1, return_features=False, use_jit=True):
+        return SimpleNamespace(gamma=gamma, radius=radius, return_features=return_features, use_jit=use_jit)
 
     @torch.no_grad()
     def __call__(self, image, face_boxes, rgb=True):
@@ -75,7 +78,7 @@ class FANPredictor(object):
                 (0, 3, 1, 2)).astype(np.float32)).to(self.device) / 255.0
 
             # Get heatmaps
-            heatmaps = self.net(face_patches).detach()
+            heatmaps, stem_feats, hg_feats = self.net(face_patches)
 
             # Get landmark coordinates and scores
             landmarks, landmark_scores = self._decode(heatmaps)
@@ -86,13 +89,22 @@ class FANPredictor(object):
                 landmark[:, 0] = landmark[:, 0] * (right - left) / hw + left
                 landmark[:, 1] = landmark[:, 1] * (bottom - top) / hh + top
 
-            return landmarks, landmark_scores
+            if self.config.return_features:
+                return landmarks, landmark_scores, torch.cat((stem_feats, torch.cat(hg_feats, dim=1) *
+                                                              torch.sum(heatmaps, dim=1, keepdim=True)), dim=1)
+            else:
+                return landmarks, landmark_scores
         else:
-            return np.empty(shape=(0, 68, 2), dtype=np.float32), np.empty(shape=(0, 68), dtype=np.float32)
+            landmarks = np.empty(shape=(0, 68, 2), dtype=np.float32)
+            landmark_scores = np.empty(shape=(0, 68), dtype=np.float32)
+            if self.config.return_features:
+                return landmarks, landmark_scores, None
+            else:
+                return landmarks, landmark_scores
 
     def _decode(self, heatmaps):
         heatmaps = heatmaps.contiguous()
-        scores = heatmaps.max(dim=3)[0].max(dim=2)[0].cpu().numpy()
+        scores = heatmaps.max(dim=3)[0].max(dim=2)[0]
 
         if (self.config.radius * heatmaps.shape[2] * heatmaps.shape[3] <
                 heatmaps.shape[2] ** 2 + heatmaps.shape[3] ** 2):
@@ -123,7 +135,8 @@ class FANPredictor(object):
         if self.config.gamma != 1.0:
             heatmaps = heatmaps.pow(self.config.gamma)
         m00s = heatmaps.sum(dim=(2, 3))
-        xs = heatmaps.sum(dim=2).mul(x_indices).sum(dim=2).div(m00s).cpu().numpy()
-        ys = heatmaps.sum(dim=3).mul(y_indices).sum(dim=2).div(m00s).cpu().numpy()
+        xs = heatmaps.sum(dim=2).mul(x_indices).sum(dim=2).div(m00s)
+        ys = heatmaps.sum(dim=3).mul(y_indices).sum(dim=2).div(m00s)
 
-        return np.stack((xs, ys), axis=-1), scores
+        lm_info = torch.stack((xs, ys, scores), dim=-1).cpu().numpy()
+        return lm_info[..., :-1], lm_info[..., -1]
