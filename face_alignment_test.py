@@ -3,6 +3,8 @@ import cv2
 import time
 import torch
 from argparse import ArgumentParser
+from ibug.face_alignment import FANPredictor
+from ibug.face_alignment.utils import plot_landmarks
 from ibug.face_detection import RetinaFacePredictor, S3FDPredictor
 
 
@@ -11,24 +13,33 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('--input', '-i', help='Input video path or webcam index', default=0)
     parser.add_argument('--output', '-o', help='Output file path', default=None)
+    parser.add_argument('--benchmark', '-b', help='Enable benchmark mode for CUDNN',
+                        action='store_true', default=False)
     parser.add_argument('--no-display', '-n', help='No display if processing a video file',
                         action='store_true', default=False)
-    parser.add_argument('--detection-threshold', '-dt',
-                        help='Confidence threshold for face detection (default=0.8)',
-                        type=float, default=0.8)
-    parser.add_argument('--detection-method', '-dm',
-                        help='Face detection method, can be either RatinaFace or S3FD (default=RatinaFace)',
-                        default='retinaface')
-    parser.add_argument('--detection-weights', '-dw',
+
+    parser.add_argument('--detection-threshold', '-dt', type=float, default=0.8,
+                        help='Confidence threshold for face detection (default=0.8)')
+    parser.add_argument('--detection-method', '-dm', default='retinaface',
+                        help='Face detection method, can be either RatinaFace or S3FD (default=RatinaFace)')
+    parser.add_argument('--detection-weights', '-dw', default=None,
                         help='Weights to be loaded for face detection, ' +
-                             'can be either resnet50 or mobilenet0.25 when using RetinaFace',
-                        default=None)
-    parser.add_argument('--detection-device', '-dd', help='Device to be used for face detection (default=cuda:0)',
-                        default='cuda:0')
+                             'can be either resnet50 or mobilenet0.25 when using RetinaFace')
+    parser.add_argument('--detection-device', '-dd', default='cuda:0',
+                        help='Device to be used for face detection (default=cuda:0)')
+
+    parser.add_argument('--alignment-threshold', '-at', type=float, default=0.2,
+                        help='Score threshold used when visualising detected landmarks (default=0.2)'),
+    parser.add_argument('--alignment-method', '-am', default='fan',
+                        help='Face alignment method, must be set to FAN')
+    parser.add_argument('--alignment-weights', '-aw', default='2dfan4',
+                        help='Weights to be loaded for face alignment, must be set to 2DFAN4')
+    parser.add_argument('--alignment-device', '-ad', default='cuda:0',
+                        help='Device to be used for face alignment (default=cuda:0)')
     args = parser.parse_args()
 
-    # Make the models run a bit faster
-    torch.backends.cudnn.benchmark = True
+    # Set benchmark mode flag for CUDNN
+    torch.backends.cudnn.benchmark = args.benchmark
 
     vid = None
     out_vid = None
@@ -48,6 +59,16 @@ def main():
             print('Face detector created using S3FD.')
         else:
             raise ValueError('detector-method must be set to either RetinaFace or S3FD')
+
+        # Create the landmark detector
+        args.alignment_method = args.alignment_method.lower()
+        if args.alignment_method == 'fan':
+            landmark_detector = FANPredictor(device=args.alignment_device,
+                                             model=(FANPredictor.get_model(args.alignment_weights)
+                                                    if args.alignment_weights else None))
+            print('Landmark detector created using FAN.')
+        else:
+            raise ValueError('alignment-method must be set to FAN')
 
         # Open the input video
         using_webcam = not os.path.exists(args.input)
@@ -78,19 +99,26 @@ def main():
                 # Detect faces
                 start_time = time.time()
                 faces = face_detector(frame, rgb=False)
-                elapsed_time = time.time() - start_time
+                current_time = time.time()
+                elapsed_time = current_time - start_time
+
+                # Face alignment
+                start_time = current_time
+                landmarks, scores = landmark_detector(frame, faces, rgb=False)
+                current_time = time.time()
+                elapsed_time2 = current_time - start_time
 
                 # Textural output
-                print(f'Frame #{frame_number} processed in {elapsed_time * 1000.0:.04f} ms: ' +
-                      f'{len(faces)} faces detected.')
+                print(f'Frame #{frame_number} processed in {elapsed_time * 1000.0:.04f} + ' +
+                      f'{elapsed_time2 * 1000.0:.04f} ms: {len(faces)} faces analysed..')
 
                 # Rendering
-                for face in faces:
+                for face, lm, sc in zip(faces, landmarks, scores):
                     bbox = face[:4].astype(int)
                     cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color=(0, 0, 255), thickness=2)
+                    plot_landmarks(frame, lm, sc, threshold=args.alignment_threshold)
                     if len(face) > 5:
-                        for pts in face[5:].reshape((-1, 2)):
-                            cv2.circle(frame, tuple(pts.astype(int).tolist()), 3, (0, 0, 255), -1)
+                        plot_landmarks(frame, face[5:].reshape((-1, 2)), pts_radius=3)
 
                 # Write the frame to output video (if recording)
                 if out_vid is not None:
