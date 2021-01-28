@@ -36,11 +36,11 @@ class FANPredictor(object):
             raise ValueError('name must be set to fan4')
 
     @staticmethod
-    def create_config(gamma=1.0, radius=0.1, return_features=False, use_jit=True):
-        return SimpleNamespace(gamma=gamma, radius=radius, return_features=return_features, use_jit=use_jit)
+    def create_config(gamma=1.0, radius=0.1, use_jit=True):
+        return SimpleNamespace(gamma=gamma, radius=radius, use_jit=use_jit)
 
     @torch.no_grad()
-    def __call__(self, image, face_boxes, rgb=True):
+    def __call__(self, image, face_boxes, rgb=True, return_features=False):
         if face_boxes.shape[0] > 0:
             if not rgb:
                 image = image[..., ::-1]
@@ -89,7 +89,7 @@ class FANPredictor(object):
                 landmark[:, 0] = landmark[:, 0] * (right - left) / hw + left
                 landmark[:, 1] = landmark[:, 1] * (bottom - top) / hh + top
 
-            if self.config.return_features:
+            if return_features:
                 return landmarks, landmark_scores, torch.cat((stem_feats, torch.cat(hg_feats, dim=1) *
                                                               torch.sum(heatmaps, dim=1, keepdim=True)), dim=1)
             else:
@@ -97,7 +97,7 @@ class FANPredictor(object):
         else:
             landmarks = np.empty(shape=(0, 68, 2), dtype=np.float32)
             landmark_scores = np.empty(shape=(0, 68), dtype=np.float32)
-            if self.config.return_features:
+            if return_features:
                 return landmarks, landmark_scores, None
             else:
                 return landmarks, landmark_scores
