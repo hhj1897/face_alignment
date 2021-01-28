@@ -22,7 +22,7 @@ class FANPredictor(object):
                                                             self.config.input_size).to(self.device))
 
     @staticmethod
-    def get_model(name='2dfan4'):
+    def get_model(name='2dfan2'):
         name = name.lower()
         if name == '2dfan4':
             return SimpleNamespace(weights=os.path.join(os.path.dirname(__file__), 'weights', '2dfan4.pth'),

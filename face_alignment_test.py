@@ -32,8 +32,8 @@ def main():
                         help='Score threshold used when visualising detected landmarks (default=0.2)'),
     parser.add_argument('--alignment-method', '-am', default='fan',
                         help='Face alignment method, must be set to FAN')
-    parser.add_argument('--alignment-weights', '-aw', default='2dfan4',
-                        help='Weights to be loaded for face alignment, must be set to 2DFAN4')
+    parser.add_argument('--alignment-weights', '-aw', default='2dfan2',
+                        help='Weights to be loaded for face alignment, can be either 2DFAN2 or 2DFAN4')
     parser.add_argument('--alignment-device', '-ad', default='cuda:0',
                         help='Device to be used for face alignment (default=cuda:0)')
     args = parser.parse_args()
