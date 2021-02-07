@@ -41,9 +41,11 @@ class FANPredictor(object):
 
     @torch.no_grad()
     def __call__(self, image, face_boxes, rgb=True, return_features=False):
-        if face_boxes.shape[0] > 0:
+        if face_boxes.size > 0:
             if not rgb:
                 image = image[..., ::-1]
+            if face_boxes.ndim == 1:
+                face_boxes = face_boxes[np.newaxis, ...]
 
             # Crop the faces
             face_patches = []
