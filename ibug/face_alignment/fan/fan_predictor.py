@@ -7,6 +7,9 @@ from typing import Union, Optional, Tuple
 from .fan import FAN
 
 
+__all__ = ['FANPredictor']
+
+
 class FANPredictor(object):
     def __init__(self, device: Union[str, torch.device] = 'cuda:0', model: Optional[SimpleNamespace] = None,
                  config: Optional[SimpleNamespace] = None) -> None:
