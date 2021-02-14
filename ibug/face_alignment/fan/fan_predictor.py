@@ -3,11 +3,13 @@ import cv2
 import torch
 import numpy as np
 from types import SimpleNamespace
+from typing import Union, Optional, Tuple
 from .fan import FAN
 
 
 class FANPredictor(object):
-    def __init__(self, device='cuda:0', model=None, config=None):
+    def __init__(self, device: Union[str, torch.device] = 'cuda:0', model: Optional[SimpleNamespace] = None,
+                 config: Optional[SimpleNamespace] = None) -> None:
         self.device = device
         if model is None:
             model = FANPredictor.get_model()
@@ -22,7 +24,7 @@ class FANPredictor(object):
                                                             self.config.input_size).to(self.device))
 
     @staticmethod
-    def get_model(name='2dfan2'):
+    def get_model(name: str = '2dfan2') -> SimpleNamespace:
         name = name.lower()
         if name == '2dfan4':
             return SimpleNamespace(weights=os.path.join(os.path.dirname(__file__), 'weights', '2dfan4.pth'),
@@ -36,11 +38,13 @@ class FANPredictor(object):
             raise ValueError('name must be set to fan4')
 
     @staticmethod
-    def create_config(gamma=1.0, radius=0.1, use_jit=True):
+    def create_config(gamma: float = 1.0, radius: float = 0.1, use_jit: bool = True) -> SimpleNamespace:
         return SimpleNamespace(gamma=gamma, radius=radius, use_jit=use_jit)
 
     @torch.no_grad()
-    def __call__(self, image, face_boxes, rgb=True, return_features=False):
+    def __call__(self, image: np.ndarray, face_boxes: np.ndarray, rgb: bool = True,
+                 return_features: bool = False) -> Union[Tuple[np.ndarray, np.ndarray],
+                                                         Tuple[np.ndarray, np.ndarray, Optional[torch.Tensor]]]:
         if face_boxes.size > 0:
             if not rgb:
                 image = image[..., ::-1]
@@ -104,7 +108,7 @@ class FANPredictor(object):
             else:
                 return landmarks, landmark_scores
 
-    def _decode(self, heatmaps):
+    def _decode(self, heatmaps: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         heatmaps = heatmaps.contiguous()
         scores = heatmaps.max(dim=3)[0].max(dim=2)[0]
 

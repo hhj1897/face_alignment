@@ -1,10 +1,11 @@
 import cv2
 import numpy as np
+from typing import Optional, Iterable
 
 
-def plot_landmarks(image, landmarks, landmark_scores=None, threshold=0.2,
-                   line_colour=(0, 255, 0), pts_colour=(0, 0, 255),
-                   line_thickness=1, pts_radius=1):
+def plot_landmarks(image: np.ndarray, landmarks: np.ndarray, landmark_scores: Optional[Iterable[float]] = None,
+                   threshold: float = 0.2, line_colour: Iterable[int] = (0, 255, 0),
+                   pts_colour: Iterable[int] = (0, 0, 255), line_thickness: int = 1, pts_radius: int = 1) -> None:
     if landmarks.shape[0] > 0:
         if landmark_scores is None:
             landmark_scores = np.full(shape=(landmarks.shape[0],), fill_value=threshold + 1)

@@ -1,4 +1,4 @@
-# face_alignment
+# ibug.face_alignment
 TODO
 
 ## Prerequisites

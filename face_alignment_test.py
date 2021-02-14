@@ -8,7 +8,7 @@ from ibug.face_alignment.utils import plot_landmarks
 from ibug.face_detection import RetinaFacePredictor, S3FDPredictor
 
 
-def main():
+def main() -> None:
     # Parse command-line arguments
     parser = ArgumentParser()
     parser.add_argument('--input', '-i', help='Input video path or webcam index', default=0)
