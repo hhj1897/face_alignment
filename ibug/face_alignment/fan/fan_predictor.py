@@ -115,7 +115,7 @@ class FANPredictor(object):
         heatmaps = heatmaps.contiguous()
         scores = heatmaps.max(dim=3)[0].max(dim=2)[0]
 
-        if (self.config.radius * heatmaps.shape[2] * heatmaps.shape[3] <
+        if (self.config.radius ** 2 * heatmaps.shape[2] * heatmaps.shape[3] <
                 heatmaps.shape[2] ** 2 + heatmaps.shape[3] ** 2):
             # Find peaks in all heatmaps
             m = heatmaps.view(heatmaps.shape[0] * heatmaps.shape[1], -1).argmax(1)
