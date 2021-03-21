@@ -47,7 +47,7 @@ class FANPredictor(object):
     @torch.no_grad()
     def __call__(self, image: np.ndarray, face_boxes: np.ndarray, rgb: bool = True,
                  return_features: bool = False) -> Union[Tuple[np.ndarray, np.ndarray],
-                                                         Tuple[np.ndarray, np.ndarray, Optional[torch.Tensor]]]:
+                                                         Tuple[np.ndarray, np.ndarray, torch.Tensor]]:
         if face_boxes.size > 0:
             if not rgb:
                 image = image[..., ::-1]
@@ -107,7 +107,7 @@ class FANPredictor(object):
             landmarks = np.empty(shape=(0, 68, 2), dtype=np.float32)
             landmark_scores = np.empty(shape=(0, 68), dtype=np.float32)
             if return_features:
-                return landmarks, landmark_scores, None
+                return landmarks, landmark_scores, torch.Tensor([])
             else:
                 return landmarks, landmark_scores
 

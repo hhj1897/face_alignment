@@ -113,7 +113,7 @@ def main() -> None:
 
                 # Textural output
                 print(f'Frame #{frame_number} processed in {elapsed_time * 1000.0:.04f} + ' +
-                      f'{elapsed_time2 * 1000.0:.04f} ms: {len(faces)} faces analysed..')
+                      f'{elapsed_time2 * 1000.0:.04f} ms: {len(faces)} faces analysed.')
 
                 # Rendering
                 for face, lm, sc in zip(faces, landmarks, scores):
