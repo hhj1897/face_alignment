@@ -111,7 +111,7 @@ class FANPredictor(object):
             else:
                 return landmarks, landmark_scores
 
-    def _decode(self, heatmaps: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def _decode(self, heatmaps: torch.Tensor) -> Tuple[np.ndarray, np.ndarray]:
         heatmaps = heatmaps.contiguous()
         scores = heatmaps.max(dim=3)[0].max(dim=2)[0]
 
