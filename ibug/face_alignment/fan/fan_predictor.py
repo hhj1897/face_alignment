@@ -143,7 +143,7 @@ class FANPredictor(object):
         heatmaps = heatmaps.clamp_min(0.0)
         if self.config.gamma != 1.0:
             heatmaps = heatmaps.pow(self.config.gamma)
-        m00s = heatmaps.sum(dim=(2, 3))
+        m00s = heatmaps.sum(dim=(2, 3)).clamp_min(torch.finfo(heatmaps.dtype).eps)
         xs = heatmaps.sum(dim=2).mul(x_indices).sum(dim=2).div(m00s)
         ys = heatmaps.sum(dim=3).mul(y_indices).sum(dim=2).div(m00s)
 
