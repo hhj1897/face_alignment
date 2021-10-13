@@ -120,7 +120,7 @@ class FANPredictor(object):
             # Find peaks in all heatmaps
             m = heatmaps.view(heatmaps.shape[0] * heatmaps.shape[1], -1).argmax(1)
             all_peaks = torch.cat(
-                [(m // heatmaps.shape[3]).view(-1, 1), (m % heatmaps.shape[3]).view(-1, 1)], dim=1
+                [(m / heatmaps.shape[3]).trunc().view(-1, 1), (m % heatmaps.shape[3]).view(-1, 1)], dim=1
             ).reshape((heatmaps.shape[0], heatmaps.shape[1], 1, 1, 2)).repeat(
                 1, 1, heatmaps.shape[2], heatmaps.shape[3], 1).float()
 
