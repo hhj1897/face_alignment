@@ -37,8 +37,12 @@ class FANPredictor(object):
             return SimpleNamespace(weights=os.path.join(os.path.dirname(__file__), 'weights', '2dfan4.pth'),
                                    config=SimpleNamespace(crop_ratio=0.55, input_size=256, num_modules=4,
                                                           hg_num_features=256, hg_depth=4, use_avg_pool=True))
+        elif name == '2dfan2_alt':
+            return SimpleNamespace(weights=os.path.join(os.path.dirname(__file__), 'weights', '2dfan2_alt.pth'),
+                                   config=SimpleNamespace(crop_ratio=0.55, input_size=256, num_modules=2,
+                                                          hg_num_features=256, hg_depth=4, use_avg_pool=False))
         else:
-            raise ValueError('name must be set to either 2dfan2 or 2dfan4')
+            raise ValueError('name must be set to either 2dfan2, 2dfan4, or 2dfan2_alt')
 
     @staticmethod
     def create_config(gamma: float = 1.0, radius: float = 0.1, use_jit: bool = True) -> SimpleNamespace:
