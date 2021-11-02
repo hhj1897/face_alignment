@@ -78,7 +78,7 @@ def main() -> None:
             fd_model.weights = args.detection_alternative_pth
         face_detector = face_detector_class[0](
             threshold=args.detection_threshold, device=args.detection_device, model=fd_model)
-        print(f"Face detector created using {face_detector_class[1]}.")
+        print(f"Face detector created using {face_detector_class[1]} ({fd_model.weights}).")
 
         # Create the landmark detector
         args.alignment_method = args.alignment_method.lower()
@@ -90,7 +90,7 @@ def main() -> None:
             if args.alignment_alternative_pth is not None:
                 fa_model.weights = args.alignment_alternative_pth
             landmark_detector = FANPredictor(device=args.alignment_device, model=fa_model)
-            print('Landmark detector created using FAN.')
+            print(f"Landmark detector created using FAN ({fa_model.weights}).")
         else:
             raise ValueError('alignment-method must be set to FAN')
 
