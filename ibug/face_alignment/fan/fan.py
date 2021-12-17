@@ -9,17 +9,21 @@ def conv3x3(in_planes, out_planes, strd=1, padding=1, bias=False):
 
 
 class ConvBlock(nn.Module):
-    def __init__(self, in_planes, out_planes):
+    def __init__(self, in_planes, out_planes, use_instance_norm):
         super(ConvBlock, self).__init__()
-        self.bn1 = nn.BatchNorm2d(in_planes)
+        self.bn1 = nn.InstanceNorm2d(in_planes) if use_instance_norm else nn.BatchNorm2d(in_planes)
         self.conv1 = conv3x3(in_planes, int(out_planes / 2))
-        self.bn2 = nn.BatchNorm2d(int(out_planes / 2))
+        self.bn2 = (nn.InstanceNorm2d(int(out_planes / 2)) if use_instance_norm
+                    else nn.BatchNorm2d(int(out_planes / 2)))
         self.conv2 = conv3x3(int(out_planes / 2), int(out_planes / 4))
-        self.bn3 = nn.BatchNorm2d(int(out_planes / 4))
+        self.bn3 = (nn.InstanceNorm2d(int(out_planes / 4)) if use_instance_norm
+                    else nn.BatchNorm2d(int(out_planes / 4)))
         self.conv3 = conv3x3(int(out_planes / 4), int(out_planes / 4))
 
         if in_planes != out_planes:
-            self.downsample = nn.Sequential(nn.BatchNorm2d(in_planes), nn.ReLU(True),
+            self.downsample = nn.Sequential(nn.InstanceNorm2d(in_planes) if use_instance_norm
+                                            else nn.BatchNorm2d(in_planes),
+                                            nn.ReLU(True),
                                             nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=1, bias=False))
         else:
             self.downsample = None
@@ -57,17 +61,24 @@ class HourGlass(nn.Module):
         self._generate_network(self.config.hg_depth)
 
     def _generate_network(self, level):
-        self.add_module('b1_' + str(level), ConvBlock(self.config.hg_num_features, self.config.hg_num_features))
+        self.add_module('b1_' + str(level), ConvBlock(self.config.hg_num_features,
+                                                      self.config.hg_num_features,
+                                                      self.config.use_instance_norm))
 
-        self.add_module('b2_' + str(level), ConvBlock(self.config.hg_num_features, self.config.hg_num_features))
+        self.add_module('b2_' + str(level), ConvBlock(self.config.hg_num_features,
+                                                      self.config.hg_num_features,
+                                                      self.config.use_instance_norm))
 
         if level > 1:
             self._generate_network(level - 1)
         else:
             self.add_module('b2_plus_' + str(level),ConvBlock(self.config.hg_num_features,
-                                                              self.config.hg_num_features))
+                                                              self.config.hg_num_features,
+                                                              self.config.use_instance_norm))
 
-        self.add_module('b3_' + str(level), ConvBlock(self.config.hg_num_features, self.config.hg_num_features))
+        self.add_module('b3_' + str(level), ConvBlock(self.config.hg_num_features,
+                                                      self.config.hg_num_features,
+                                                      self.config.use_instance_norm))
 
     def _forward(self, level, inp):
         up1 = inp
@@ -103,20 +114,23 @@ class FAN(nn.Module):
 
         # Stem
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3)
-        self.bn1 = nn.BatchNorm2d(64)
-        self.conv2 = ConvBlock(64, 128)
-        self.conv3 = ConvBlock(128, 128)
-        self.conv4 = ConvBlock(128, self.config.hg_num_features)
+        self.bn1 = nn.InstanceNorm2d(64) if self.config.use_instance_norm else nn.BatchNorm2d(64)
+        self.conv2 = ConvBlock(64, 128, self.config.use_instance_norm)
+        self.conv3 = ConvBlock(128, 128, self.config.use_instance_norm)
+        self.conv4 = ConvBlock(128, self.config.hg_num_features, self.config.use_instance_norm)
 
         # Hourglasses
         for hg_module in range(self.config.num_modules):
             self.add_module('m' + str(hg_module), HourGlass(self.config))
             self.add_module('top_m_' + str(hg_module), ConvBlock(self.config.hg_num_features,
-                                                                 self.config.hg_num_features))
+                                                                 self.config.hg_num_features,
+                                                                 self.config.use_instance_norm))
             self.add_module('conv_last' + str(hg_module), nn.Conv2d(self.config.hg_num_features,
                                                                     self.config.hg_num_features,
                                                                     kernel_size=1, stride=1, padding=0))
-            self.add_module('bn_end' + str(hg_module), nn.BatchNorm2d(self.config.hg_num_features))
+            self.add_module('bn_end' + str(hg_module),
+                            nn.InstanceNorm2d(self.config.hg_num_features) if self.config.use_instance_norm
+                            else nn.BatchNorm2d(self.config.hg_num_features))
             self.add_module('l' + str(hg_module), nn.Conv2d(self.config.hg_num_features, 68,
                                                             kernel_size=1, stride=1, padding=0))
 
