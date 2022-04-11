@@ -34,19 +34,22 @@ class FANPredictor(object):
                                    config=SimpleNamespace(crop_ratio=0.55, input_size=256, num_modules=2,
                                                           hg_num_features=256, hg_depth=4, use_avg_pool=False,
                                                           use_instance_norm=False, stem_conv_kernel_size=7,
-                                                          stem_conv_stride=2, stem_pool_kernel_size=2))
+                                                          stem_conv_stride=2, stem_pool_kernel_size=2,
+                                                          num_landmarks=68))
         elif name == '2dfan4':
             return SimpleNamespace(weights=os.path.join(os.path.dirname(__file__), 'weights', '2dfan4.pth'),
                                    config=SimpleNamespace(crop_ratio=0.55, input_size=256, num_modules=4,
                                                           hg_num_features=256, hg_depth=4, use_avg_pool=True,
                                                           use_instance_norm=False, stem_conv_kernel_size=7,
-                                                          stem_conv_stride=2, stem_pool_kernel_size=2))
+                                                          stem_conv_stride=2, stem_pool_kernel_size=2,
+                                                          num_landmarks=68))
         elif name == '2dfan2_alt':
             return SimpleNamespace(weights=os.path.join(os.path.dirname(__file__), 'weights', '2dfan2_alt.pth'),
                                    config=SimpleNamespace(crop_ratio=0.55, input_size=256, num_modules=2,
                                                           hg_num_features=256, hg_depth=4, use_avg_pool=False,
                                                           use_instance_norm=False, stem_conv_kernel_size=7,
-                                                          stem_conv_stride=2, stem_pool_kernel_size=2))
+                                                          stem_conv_stride=2, stem_pool_kernel_size=2,
+                                                          num_landmarks=68))
         else:
             raise ValueError('name must be set to either 2dfan2, 2dfan4, or 2dfan2_alt')
 

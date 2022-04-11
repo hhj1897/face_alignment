@@ -133,14 +133,16 @@ class FAN(nn.Module):
             self.add_module('bn_end' + str(hg_module),
                             nn.InstanceNorm2d(self.config.hg_num_features) if self.config.use_instance_norm
                             else nn.BatchNorm2d(self.config.hg_num_features))
-            self.add_module('l' + str(hg_module), nn.Conv2d(self.config.hg_num_features, 68,
+            self.add_module('l' + str(hg_module), nn.Conv2d(self.config.hg_num_features,
+                                                            self.config.num_landmarks,
                                                             kernel_size=1, stride=1, padding=0))
 
             if hg_module < self.config.num_modules - 1:
                 self.add_module('bl' + str(hg_module), nn.Conv2d(self.config.hg_num_features,
                                                                  self.config.hg_num_features,
                                                                  kernel_size=1, stride=1, padding=0))
-                self.add_module('al' + str(hg_module), nn.Conv2d(68, self.config.hg_num_features,
+                self.add_module('al' + str(hg_module), nn.Conv2d(self.config.num_landmarks,
+                                                                 self.config.hg_num_features,
                                                                  kernel_size=1, stride=1, padding=0))
 
     def forward(self, x):

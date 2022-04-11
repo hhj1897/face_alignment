@@ -48,7 +48,9 @@ def main() -> None:
                         help='Weights to be loaded for face alignment, can be either 2DFAN2, 2DFAN4, ' +
                              'or 2DFAN2_ALT (default=2DFAN2_ALT)')
     parser.add_argument('--alignment-alternative-pth', '-ap', default=None,
-                        help='Alternative pth file to be loaded for face alaignment')
+                        help='Alternative pth file to be loaded for face alignment')
+    parser.add_argument('--alignment-alternative-landmarks', '-al', default=None,
+                        help='Alternative number of landmarks to detect')
     parser.add_argument('--alignment-device', '-ad', default='cuda:0',
                         help='Device to be used for face alignment (default=cuda:0)')
     parser.add_argument('--hide-alignment-results', '-ha', help='Do not visualise face alignment results',
@@ -89,6 +91,8 @@ def main() -> None:
                 fa_model = FANPredictor.get_model(args.alignment_weights)
             if args.alignment_alternative_pth is not None:
                 fa_model.weights = args.alignment_alternative_pth
+            if args.alignment_alternative_landmarks is not None:
+                fa_model.config.num_landmarks = int(args.alignment_alternative_landmarks)
             landmark_detector = FANPredictor(device=args.alignment_device, model=fa_model)
             print(f"Landmark detector created using FAN ({fa_model.weights}).")
         else:
