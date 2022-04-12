@@ -6,7 +6,7 @@ from typing import Optional, Sequence, Tuple
 __all__ = ['get_landmark_connectivity', 'plot_landmarks']
 
 
-def get_landmark_connectivity(num_landmarks):
+def get_landmark_connectivity(num_landmarks: int) -> Optional[Sequence[Tuple[int, int]]]:
     if num_landmarks == 68:
         return ((0, 1), (1, 2), (2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8), (8, 9), (9, 10), (10, 11), (11, 12),
                 (12, 13), (13, 14), (14, 15), (15, 16), (17, 18), (18, 19), (19, 20), (20, 21), (22, 23), (23, 24),
@@ -33,7 +33,7 @@ def get_landmark_connectivity(num_landmarks):
 def plot_landmarks(image: np.ndarray, landmarks: np.ndarray, landmark_scores: Optional[Sequence[float]] = None,
                    threshold: float = 0.2, line_colour: Tuple[int, int, int] = (0, 255, 0),
                    pts_colour: Tuple[int, int, int] = (0, 0, 255), line_thickness: int = 1, pts_radius: int = 1,
-                   landmark_connectivity: Optional[Sequence[Sequence[int]]] = None) -> None:
+                   landmark_connectivity: Optional[Sequence[Tuple[int, int]]] = None) -> None:
     num_landmarks = len(landmarks)
     if landmark_scores is None:
         landmark_scores = np.full((num_landmarks,), threshold + 1.0, dtype=float)
