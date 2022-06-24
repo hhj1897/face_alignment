@@ -26,10 +26,10 @@ from ibug.face_detection import RetinaFacePredictor
 from ibug.face_alignment import FANPredictor
 from ibug.face_alignment.utils import plot_landmarks
 
-# Create a RetinaFace detector using Resnet50 backbone, with the confidence 
+# Create a RetinaFace detector using Resnet50 backbone, with the confidence
 # threshold set to 0.8
 face_detector = RetinaFacePredictor(
-    thershold=0.8, device='cuda:0',
+    threshold=0.8, device='cuda:0',
     model=RetinaFacePredictor.get_model('resnet50'))
 
 # Create a facial landmark detector
@@ -44,9 +44,9 @@ image = cv2.imread('test.png')
 detected_faces = face_detector(image, rgb=False)
 
 # Detect landmarks from the faces
-# Note: 
+# Note:
 #   1. The input image must be a byte array of dimension HxWx3.
-#   2. The input face boxes must be a array of dimension Nx4, N being the 
+#   2. The input face boxes must be a array of dimension Nx4, N being the
 #      number of faces. More columns are allowed, but only the first 4
 #      columns will be used (which should be the left, top, right, and
 #      bottom coordinates of the face).
