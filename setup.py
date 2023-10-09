@@ -1,7 +1,7 @@
 import os
 import sys
 import shutil
-from setuptools import setup
+from setuptools import find_namespace_packages, setup
 
 
 def clean_repo():
@@ -33,7 +33,8 @@ config = {
     'description': 'Facial landmark detection using stack hourglass networks.',
     'author': 'Jie Shen',
     'author_email': 'js1907@imperial.ac.uk',
-    'packages': ['ibug.face_alignment'],
+    'packages': find_namespace_packages(),
+    'package_data': {'ibug.face_alignment.fan.weights': ['*.pth']},
     'install_requires': ['numpy>=1.16.0', 'torch>=1.1.0', 'opencv-python>=3.4.2'],
     'zip_safe': False
 }
